@@ -1,4 +1,4 @@
-import { InferenceSession, Tensor, OnnxValueMapType } from 'onnxruntime-node';
+import { InferenceSession } from 'onnxruntime-node';
 
 export default class DocumentationGenerationService {
   private session: InferenceSession | undefined;
@@ -11,23 +11,20 @@ export default class DocumentationGenerationService {
   private async CreateInferenceSession() {
     console.log('[METHOD]--> CreateInferenceSession()');
 
-    await InferenceSession.create(this.url).then((inferenceSession: InferenceSession) => {
-      this.session = inferenceSession;
-    });
+    await InferenceSession.create(this.url)
+      .then((inferenceSession: InferenceSession) => this.session = inferenceSession)
+      .then(() => this.session && console.log('[LOG]--> Session created successfully!'))
+      .catch((error: Error) => {
+        !this.session && console.error('[LOG]--> Failed to create the Inference Session!');
+        console.error('[LOG: ERROR DETAILS]--> ' + error.message);
+      });
   }
 
   public async generateDocstring(): Promise<string> {
     console.log('[METHOD]--> generateDocstring()');
 
-    if (!this.session) {
-      await this.CreateInferenceSession();
-    }
+    !this.session && await this.CreateInferenceSession();
 
-    if (this.session) {
-      return '[RETURN]--> Session created successfully';
-    }
-    else {
-      return '[RETURN]--> Session failed';
-    }
+    return this.session ? '[RETURN]--> Session created successfully' : '[RETURN]--> Session failed';
   }
 }
