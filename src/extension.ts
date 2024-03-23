@@ -1,6 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import DocumentationGenerationService from './services/DocumentationGenerationService';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -20,6 +21,24 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	context.subscriptions.push(disposable);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('docscribe.generateDocstring', async () => {
+			let startCommand = await vscode.window.showInformationMessage('Hello Docstring from DocScribe! \nCan we start?', 'Sure!', 'Nope!');
+	
+			if (startCommand === 'Sure!') {
+				let documentationGenerationService: DocumentationGenerationService = new DocumentationGenerationService();
+
+				await documentationGenerationService.generateDocstring().then((output: string) => {
+					vscode.window.showInformationMessage(output);
+				});
+				
+			}
+			else if (startCommand === 'Nope!') {
+				vscode.window.showInformationMessage('Cool!');
+			}
+		})
+	);
 }
 
 // This method is called when your extension is deactivated
