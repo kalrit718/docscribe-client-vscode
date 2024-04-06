@@ -27,14 +27,14 @@ export default class DocumentationGenerationService {
   }
 
   public async generateDocstring(selectedText: string): Promise<string> {
-    let strippedContent = this.stripeContent(selectedText);
+    let strippedContent: string = this.stripeContent(selectedText);
     let methodValidationInfo: MethodValidationInfo = this.validateInputMethod(strippedContent);
 
     if (!methodValidationInfo.isValidMethod) {
       throw Error('Invalid function!');
     }
 
-    let isONNXEnabled = vscode.workspace.getConfiguration().get('docscribe.useONNX');
+    let isONNXEnabled: boolean | undefined = vscode.workspace.getConfiguration().get('docscribe.useONNX');
     let decodedData: string | undefined;
 
     if (isONNXEnabled) {
@@ -71,7 +71,7 @@ export default class DocumentationGenerationService {
     let { input_ids, attention_mask } = await tokenizer(strippedContent, config);
 
     let decodedData: string | undefined;
-    const feeds = { input_ids: input_ids, attention_mask: attention_mask };
+    let feeds = { input_ids: input_ids, attention_mask: attention_mask };
 
     if (this.session) {
       await this.session.run(feeds).then((data: OnnxValueMapType) => {
