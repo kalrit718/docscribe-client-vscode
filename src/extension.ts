@@ -2,6 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import DocumentationGenerationService from './services/DocumentationGenerationService';
+import { PerformancePortalPanel } from './panels/PerformancePortalPanel';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -17,9 +18,9 @@ export function activate(context: vscode.ExtensionContext) {
 	let disposable = vscode.commands.registerCommand('docscribe.helloWorld', () => {
 		// The code you place here will be executed every time your command is executed
 		// Display a message box to the user
+		PerformancePortalPanel.render(context.extensionUri);
 		vscode.window.showInformationMessage('Hello World from DocScribe!');
 	});
-
 	context.subscriptions.push(disposable);
 
 	context.subscriptions.push(
