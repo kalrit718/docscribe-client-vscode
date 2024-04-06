@@ -21,6 +21,22 @@
         "command": "docscribe.generateDocstring",
         "title": "Generate Docstring",
         "category": "DocScribe"
+      },
+      {
+        "command": "docscribe.toggleONNX",
+        "title": "Toggle use of ONNX environment",
+        "category": "DocScribe"
+      }
+    ],
+    "configuration": [
+      {
+        "title": "Use ONNX Runtime",
+        "properties": {
+          "docscribe.useONNX": {
+            "type": "boolean",
+            "default": false
+          }
+        }
       }
     ]
   },
@@ -44,6 +60,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "@xenova/transformers": "^2.16.1",
     "onnxruntime-node": "^1.17.0"
   }
 }
