@@ -24,7 +24,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('docscribe.generateDocstring', async () => {
-			const isONNXEnabled = vscode.workspace.getConfiguration().get('docscribe.useONNX');
 			let documentationGenerationService: DocumentationGenerationService = new DocumentationGenerationService(context.extensionUri);
 			
 			let editor = vscode.window.activeTextEditor;

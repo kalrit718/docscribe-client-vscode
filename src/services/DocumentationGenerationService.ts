@@ -1,23 +1,23 @@
 import * as vscode from 'vscode';
 import { InferenceSession, OnnxValueMapType } from 'onnxruntime-node';
 import { MethodValidationInfo } from './DocumentationGenerationService.types';
+import ApiClientService from './ApiClientService';
+import { GeneratedDocstringResponse } from './ApiClientService.types';
 
 
 export default class DocumentationGenerationService {
   private session: InferenceSession | undefined;
-  private url: string;
+  private onnxModelPath: string;
   
   constructor(extensionUri: vscode.Uri) {
     console.log("[INIT]--> Start DocumentationGenerationService");
-    this.url = extensionUri.fsPath + '\\mymodel.onnx';
-    console.log(extensionUri);
-    console.log(this.url);
+    this.onnxModelPath = extensionUri.fsPath + '\\model.onnx';
   }
 
   private async CreateInferenceSession() {
     console.log('[METHOD]--> CreateInferenceSession()');
 
-    await InferenceSession.create(this.url)
+    await InferenceSession.create(this.onnxModelPath)
       .then((inferenceSession: InferenceSession) => this.session = inferenceSession)
       .then(() => this.session && console.log('[LOG]--> Session created successfully!'))
       .catch((error: Error) => {
@@ -27,16 +27,42 @@ export default class DocumentationGenerationService {
   }
 
   public async generateDocstring(selectedText: string): Promise<string> {
-    const { AutoTokenizer, AutoModel, AutoConfig, Tensor } = await import('@xenova/transformers');
-
-    !this.session && await this.CreateInferenceSession();
-
     let strippedContent = this.stripeContent(selectedText);
     let methodValidationInfo: MethodValidationInfo = this.validateInputMethod(strippedContent);
 
     if (!methodValidationInfo.isValidMethod) {
       throw Error('Invalid function!');
     }
+
+    let isONNXEnabled = vscode.workspace.getConfiguration().get('docscribe.useONNX');
+    let decodedData: string | undefined;
+
+    if (isONNXEnabled) {
+      console.log('USE ONNX!!!');
+      await this.generateDocstringFromONNX(strippedContent)
+        .then((outputString: string) => decodedData = outputString);
+    }
+    else {
+      console.log('NO ONNX!!!');
+      let apiClientService: ApiClientService = new ApiClientService();
+
+      await apiClientService.getGeneratedDocstring(strippedContent)
+        .then((generatedDocstringResponse: GeneratedDocstringResponse) => decodedData = generatedDocstringResponse.generated_text);
+    }
+
+    if (decodedData && decodedData.trim() !== '') {
+      let formattedOutput: string = this.formatOutput(decodedData, methodValidationInfo.methodParams);
+      return formattedOutput;
+    }
+    else {
+      throw Error('Attempt Unsuccessful!');
+    }
+  }
+
+  private async generateDocstringFromONNX(strippedContent: string): Promise<string> {
+    const { AutoTokenizer, AutoModel, AutoConfig, Tensor } = await import('@xenova/transformers');
+
+    !this.session && await this.CreateInferenceSession();
 
     const tokenizer = await AutoTokenizer.from_pretrained('kalrit718/docscribe-1', { quantized: true });
     const model = await AutoModel.from_pretrained('kalrit718/docscribe-1');
@@ -64,9 +90,8 @@ export default class DocumentationGenerationService {
       });
     }
 
-    if (decodedData) {
-      let formattedOutput: string = this.formatOutput(decodedData, methodValidationInfo.methodParams);
-      return formattedOutput;
+    if (decodedData && decodedData.trim() !== '') {
+      return decodedData;
     }
     else {
       throw Error('Attempt Unsuccessful!');
