@@ -54,7 +54,8 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('docscribe.toggleONNX', () => {
 			const currentSetting = vscode.workspace.getConfiguration().get('docscribe.useONNX');
 			const newSetting = !currentSetting;
-			vscode.workspace.getConfiguration().update('docscribe.useONNX', newSetting, vscode.ConfigurationTarget.Global);
+			vscode.workspace.getConfiguration().update('docscribe.useONNX', newSetting, vscode.ConfigurationTarget.Global)
+				.then(() => vscode.window.showInformationMessage(`Changed the use of ONNX environment to '${newSetting}'`));
 		})
 	);
 }
