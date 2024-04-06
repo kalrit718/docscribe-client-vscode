@@ -24,19 +24,38 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('docscribe.generateDocstring', async () => {
-			let startCommand = await vscode.window.showInformationMessage('Hello Docstring from DocScribe! \nCan we start?', 'Sure!', 'Nope!');
-	
-			if (startCommand === 'Sure!') {
-				let documentationGenerationService: DocumentationGenerationService = new DocumentationGenerationService();
+			const isONNXEnabled = vscode.workspace.getConfiguration().get('docscribe.useONNX');
+			let documentationGenerationService: DocumentationGenerationService = new DocumentationGenerationService(context.extensionUri);
+			
+			let editor = vscode.window.activeTextEditor;
 
-				await documentationGenerationService.generateDocstring().then((output: string) => {
-					vscode.window.showInformationMessage(output);
+			if (!editor) {
+				vscode.window.showErrorMessage('No active editor!');
+				return;
+			}
+			
+			let selection = editor.selection;
+			let selectedText = editor.document.getText(selection).trim();
+
+			await documentationGenerationService.generateDocstring(selectedText)
+				.then((output: string) => {
+					editor && editor.edit((editBuilder: vscode.TextEditorEdit) => {
+							editBuilder.insert(selection.start, output);
+						});
+						vscode.window.showInformationMessage('Yay! Generated the docstring successfully!');
+				})
+				.catch((error: Error) => {
+					vscode.window.showInformationMessage(`Oops! Something went wrong :/`);
+					error.message && (error.message.trim() !== '') && vscode.window.showInformationMessage(error.message);
 				});
-				
-			}
-			else if (startCommand === 'Nope!') {
-				vscode.window.showInformationMessage('Cool!');
-			}
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('docscribe.toggleONNX', () => {
+			const currentSetting = vscode.workspace.getConfiguration().get('docscribe.useONNX');
+			const newSetting = !currentSetting;
+			vscode.workspace.getConfiguration().update('docscribe.useONNX', newSetting, vscode.ConfigurationTarget.Global);
 		})
 	);
 }
