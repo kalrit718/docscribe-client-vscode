@@ -1,6 +1,7 @@
-import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vscode";
+import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn, workspace, ConfigurationTarget, ProgressLocation, Progress, CancellationToken } from "vscode";
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
+import DocumentationGenerationService from "../services/DocumentationGenerationService";
 
 export class PerformancePortalPanel {
   public static currentPanel: PerformancePortalPanel | undefined;
@@ -12,7 +13,7 @@ export class PerformancePortalPanel {
 
     this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
     this._panel.webview.html = this._getWebviewContent(this._panel.webview, extensionUri);
-    this._setWebviewMessageListener(this._panel.webview);
+    this._setWebviewMessageListener(this._panel.webview, extensionUri);
   }
 
   public static render(extensionUri: Uri) {
@@ -59,7 +60,6 @@ export class PerformancePortalPanel {
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
           <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
           <link rel="stylesheet" type="text/css" href="${stylesUri}">
-          <title>Hello World</title>
         </head>
         <body>
           <div id="root"></div>
@@ -69,15 +69,54 @@ export class PerformancePortalPanel {
     `;
   }
 
-  private _setWebviewMessageListener(webview: Webview) {
+  private _setWebviewMessageListener(webview: Webview, extensionUri: Uri) {
+    let documentationGenerationService: DocumentationGenerationService = new DocumentationGenerationService(extensionUri);
+    
     webview.onDidReceiveMessage(
       (message: any) => {
         const command = message.command;
-        const text = message.text;
 
         switch (command) {
-          case "hello":
-            window.showInformationMessage(text);
+          case 'changeEnvironment':
+            let selectedEnvironment: string = message.selectedEnvironment;
+            let isONNXEnabled: boolean = (selectedEnvironment === 'ONNX');
+
+            workspace.getConfiguration().update('docscribe.useONNX', isONNXEnabled, ConfigurationTarget.Global)
+              .then(() => {
+                this._panel.webview.postMessage({
+                  command: 'changeEnvironmentSuccess'
+                });
+                window.showInformationMessage(`Changed the use of ONNX environment to '${isONNXEnabled}'`);
+              });
+            return;
+          case 'getEnvironmentDetails':
+            this._panel.webview.postMessage({
+              command: 'environmentDetails',
+              environment: (workspace.getConfiguration().get('docscribe.useONNX')) ? 'ONNX' : 'SERVER'
+            });
+            return;
+          case 'generateDocstring':
+            window.withProgress({
+              location: ProgressLocation.Notification,
+              title: "DocScribe",
+              cancellable: false
+            }, async (progress: Progress<{ message: string }>, token: CancellationToken) => {
+              
+              progress.report({ message: 'Generating the documentation reference...' });
+        
+              return documentationGenerationService.generateDocstring(message.inputCodeblock)
+                .then((output: string | void) => {
+                  this._panel.webview.postMessage({
+                    command: 'generatedDocstring',
+                    generatedDocstring: output
+                  });
+                  window.showInformationMessage('Yay! Generated the docstring successfully!');
+                })
+                .catch((error: Error) => {
+                  window.showInformationMessage(`Oops! Something went wrong :/`);
+                  error.message && (error.message.trim() !== '') && window.showInformationMessage(error.message);
+                });  
+            });
             return;
         }
       },
