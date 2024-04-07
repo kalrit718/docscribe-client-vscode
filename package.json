@@ -14,8 +14,9 @@
   "contributes": {
     "commands": [
       {
-        "command": "docscribe.helloWorld",
-        "title": "Hello World"
+        "command": "docscribe.openPerformancePortal",
+        "title": "Open Performance Portal",
+        "category": "DocScribe"
       },
       {
         "command": "docscribe.generateDocstring",

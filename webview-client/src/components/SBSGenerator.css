@@ -1,0 +1,18 @@
+
+.generated-docstring-text-area {
+  margin-left: 5px;
+}
+
+.side-by-side-wrapper {
+  width: auto;
+  display: block;
+}
+
+.side-by-side-text-row {
+  display: inline-block;
+  width: auto;
+}
+
+.generate-docstring-button {
+  width: 685px;
+}

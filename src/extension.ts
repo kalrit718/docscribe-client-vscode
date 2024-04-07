@@ -12,16 +12,11 @@ export function activate(context: vscode.ExtensionContext) {
 	// This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "docscribe" is now active!');
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('docscribe.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		PerformancePortalPanel.render(context.extensionUri);
-		vscode.window.showInformationMessage('Hello World from DocScribe!');
-	});
-	context.subscriptions.push(disposable);
+	context.subscriptions.push(
+		vscode.commands.registerCommand('docscribe.openPerformancePortal', () => {
+			PerformancePortalPanel.render(context.extensionUri);
+		})
+	);
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('docscribe.generateDocstring', async () => {
@@ -37,7 +32,15 @@ export function activate(context: vscode.ExtensionContext) {
 			let selection = editor.selection;
 			let selectedText = editor.document.getText(selection).trim();
 
-			await documentationGenerationService.generateDocstring(selectedText)
+			vscode.window.withProgress({
+				location: vscode.ProgressLocation.Notification,
+				title: "DocScribe",
+				cancellable: false
+			}, async (progress: vscode.Progress<{ message: string }>, token: vscode.CancellationToken) => {
+				
+				progress.report({ message: 'Generating the documentation reference...' });
+	
+				return documentationGenerationService.generateDocstring(selectedText)
 				.then((output: string) => {
 					editor && editor.edit((editBuilder: vscode.TextEditorEdit) => {
 							editBuilder.insert(selection.start, output);
@@ -48,6 +51,7 @@ export function activate(context: vscode.ExtensionContext) {
 					vscode.window.showInformationMessage(`Oops! Something went wrong :/`);
 					error.message && (error.message.trim() !== '') && vscode.window.showInformationMessage(error.message);
 				});
+			});
 		})
 	);
 

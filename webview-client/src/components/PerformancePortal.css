@@ -1,0 +1,9 @@
+
+.save-env-button-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.save-success-tag {
+  margin-left: 20px;
+}
