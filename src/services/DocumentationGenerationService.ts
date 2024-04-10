@@ -110,7 +110,7 @@ export default class DocumentationGenerationService {
 
   private stripeContent(selectedText: string): string {
     return selectedText.replace(/\r/g, '').replace(/\n/g, '').replace(/\t/g, '').replace(/\s/g, '').trim();
-  }
+  }  
 
   private validateInputMethod(strippedContent: string): MethodValidationInfo {
     
@@ -125,11 +125,14 @@ export default class DocumentationGenerationService {
         strippedContent = strippedContent.replace(strippedFuncName, '').trim();
       
         if (!/^\(\){/.test(strippedContent)) {
+          const extractedParamList = this.extractParamList(strippedContent);
+
           let strippedFuncParamsMatchArray: RegExpMatchArray | null = strippedContent.match(/\(.*\){/);
           let strippedParamNames: string[];
           
           if (strippedFuncParamsMatchArray) {
-            strippedParamNames = strippedFuncParamsMatchArray[0].replace(/\(/g, '').replace(/\)/g, '').replace(/\s/g, '').replace(/{$/, '').split(',');
+            // strippedParamNames = strippedFuncParamsMatchArray[0].replace(/\(/g, '').replace(/\)/g, '').replace(/\s/g, '').replace(/{$/, '').split(',');
+            strippedParamNames = extractedParamList.split(',');
 
             return {
               isValidMethod: true,
@@ -145,5 +148,12 @@ export default class DocumentationGenerationService {
       }
     }
     return { isValidMethod: false };
+  }
+
+  private extractParamList(strippedContent: string): string {
+    const hIndex = strippedContent.indexOf('(');
+    const oIndex = strippedContent.indexOf(')', hIndex + 1);
+  
+    return strippedContent.substring(hIndex+1, oIndex);
   }
 }
