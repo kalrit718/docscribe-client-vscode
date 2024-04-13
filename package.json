@@ -29,6 +29,18 @@
         "category": "DocScribe"
       }
     ],
+    "keybindings": [
+      {
+        "key": "ctrl+g",
+        "command": "docscribe.generateDocstring",
+        "mac": "ctrl+g"
+      },
+      {
+        "key": "ctrl+shift+g",
+        "command": "docscribe.openPerformancePortal",
+        "mac": "ctrl+shift+g"
+      }
+    ],
     "configuration": [
       {
         "title": "Use ONNX Runtime",
