@@ -3,10 +3,33 @@
 import * as vscode from 'vscode';
 import DocumentationGenerationService from './services/DocumentationGenerationService';
 import { PerformancePortalPanel } from './panels/PerformancePortalPanel';
+import { Auth0AuthenticationProvider } from './services/AuthService';
 
 export function activate(context: vscode.ExtensionContext) {
 
 	console.log('Congratulations, your extension "docscribe" is now active!');
+
+	context.subscriptions.push(
+		new Auth0AuthenticationProvider(context)
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('docscribe.login', async () => {
+			// const session = await vscode.authentication.getSession("auth0", [], { createIfNone: true });
+			let session: vscode.AuthenticationSession | undefined = await vscode.authentication.getSession("auth0", [], { createIfNone: false });
+			if (session) {
+				vscode.window.showInformationMessage(`Already logged in as ${session?.account.label}!`);
+			}
+			else {
+				session = await vscode.authentication.getSession("auth0", [], { createIfNone: true });
+				if (session) {
+					vscode.window.showInformationMessage('Sign in successful!');
+					vscode.window.showInformationMessage(`Welcome ${session?.account.label}!`);
+					console.log(session);
+				}
+			}
+		})
+	);
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('docscribe.openPerformancePortal', () => {
