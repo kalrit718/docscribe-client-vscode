@@ -1,5 +1,6 @@
 {
   "name": "docscribe",
+  "publisher": "kalrit718",
   "displayName": "DocScribe",
   "description": "",
   "version": "0.0.1",
@@ -16,6 +17,11 @@
       {
         "command": "docscribe.openPerformancePortal",
         "title": "Open Performance Portal",
+        "category": "DocScribe"
+      },
+      {
+        "command": "docscribe.login",
+        "title": "Login",
         "category": "DocScribe"
       },
       {
@@ -74,6 +80,7 @@
   },
   "dependencies": {
     "@xenova/transformers": "^2.16.1",
-    "onnxruntime-node": "^1.17.0"
+    "onnxruntime-node": "^1.17.0",
+    "uuid": "^9.0.1"
   }
 }
